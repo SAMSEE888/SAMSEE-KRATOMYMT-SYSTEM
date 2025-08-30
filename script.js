@@ -417,4 +417,41 @@ async function downloadBackup(type='csv') {
   } catch (e) {
     alert('เกิดข้อผิดพลาดในการสำรองข้อมูล: ' + e.message);
   }
+
+// ========== Global Config ==========
+const API_URL = "https://script.google.com/macros/s/AKfycbwWEfiRR7yq30r8z0xXrbjPA9pjd88-y6t0IdD5Kq2KTzjPO_QyOTK4odEu0e65vUSf/exec"; // ใส่ URL จาก Deploy ของ Apps Script
+
+// Utility: fetch with error handling
+async function safeFetch(url, options = {}) {
+  try {
+    const res = await fetch(url, options);
+    if (!res.ok) throw new Error("HTTP error " + res.status);
+    return await res.json();
+  } catch (err) {
+    console.error("Fetch error:", err);
+    alert("❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบอินเทอร์เน็ตหรือลองใหม่");
+    return null;
+  }
+}
+
+// บันทึกข้อมูล
+async function saveData(data) {
+  const res = await safeFetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+  if (res && res.success) {
+    alert("✅ บันทึกข้อมูลสำเร็จ");
+  }
+}
+
+// โหลดข้อมูลล่าสุด
+async function loadData(filter = "daily") {
+  const res = await safeFetch(`${API_URL}?action=getData`);
+  if (res) {
+    renderTable(res, filter);
+    renderCharts(res, filter);
+  }
+}
+
 }
