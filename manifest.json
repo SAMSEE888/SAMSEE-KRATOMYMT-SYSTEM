@@ -1,10 +1,10 @@
 {
   "name": "SSKratomYMT",
-  "short_name": "SSKratomYMT",
-  "start_url": ".",
+  "short_name": "SSKratom",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#F1F8E9",
-  "theme_color": "#2E7D32",
+  "background_color": "#ffffff",
+  "theme_color": "#2e7d32",
   "icons": [
     {
       "src": "icon.png",
