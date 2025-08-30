@@ -1,23 +1,25 @@
-/* SSKratomYMT Frontend Logic (ฉบับแก้ไข) */
+/* SSKratomYMT Frontend Logic (ปรับปรุงวันที่) */
 const CONFIG = {
   PRICE_PER_BOTTLE: 40,
-  SHEET_URL: "https://docs.google.com/spreadsheets/d/11vhg37MbHRm53SSEHLsCI3EBXx5_meXVvlRuqhFteaY", // URL ของ Google Sheet (สำหรับเปิดดู)
-  API_URL: "https://script.google.com/macros/s/AKfycbyP2LmGwRzGKNr1zqUpoQjpkpj-0C-W4tp4XrK5T9hwf64Odeb4ElRFLI6vYsBYvMx5/exec" // <<--!! วาง URL ที่ได้จากการ Deploy Web App ของ Apps Script ที่นี่
+  SHEET_URL: "https://docs.google.com/spreadsheets/d/11vhg37MbHRm53SSEHLsCI3EBXx5_meXVvlRuqhFteaY", // <- เปลี่ยนได้
+  API_URL: "https://script.google.com/macros/s/AKfycbwWEfiRR7yq30r8z0xXrbjPA9pjd88-y6t0IdD5Kq2KTzjPO_QyOTK4odEu0e65vUSf/exec" // <- วาง URL Web App ของ Apps Script
 };
 
 // ---------- Helpers ----------
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
-const fmtTHB = (n) => (n ?? 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-const parseNum = (v) => Number(v) || 0;
+const fmtTHB = (n) => (n ?? 0).toLocaleString('th-TH');
+const parseNum = (v) => Number(v || 0);
 const showLoading = (b) => $("#loadingOverlay").style.display = b ? "flex" : "none";
 
+// --- จุดที่ปรับปรุง ---
+// ฟังก์ชันนี้จะสร้างวันที่ในรูปแบบ YYYY-MM-DD ตามโซนเวลาของผู้ใช้โดยตรง
 function todayISO() {
-  const t = new Date();
-  // ปรับ timezone ให้เป็นของไทยก่อนแปลงเป็น ISO string
-  const tzOffset = 7 * 60; // Bangkok is UTC+7
-  const localTime = new Date(t.getTime() + (tzOffset - (-t.getTimezoneOffset())) * 60000);
-  return localTime.toISOString().slice(0, 10);
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // ---------- Tabs ----------
