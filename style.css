@@ -1,0 +1,137 @@
+:root {
+  --primary-color: #2E7D32;
+  --primary-light: #4CAF50;
+  --primary-lighter: #81C784;
+  --primary-dark: #1B5E20;
+  --accent-color: #8BC34A;
+  --background: #F1F8E9;
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --text-dark: #263238;
+  --text-medium: #455A64;
+  --text-light: #607D8B;
+  --success-color: #388E3C;
+  --warning-color: #F57C00;
+  --error-color: #D32F2F;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 20px rgba(0,0,0,0.1);
+  --border-radius: 12px;
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Kanit', sans-serif;
+  background-color: var(--background);
+  color: var(--text-dark);
+  line-height: 1.6;
+  padding: 20px;
+  min-height: 100vh;
+}
+.app-container { max-width: 1100px; margin: 0 auto; animation: fadeIn 0.5s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px);} to { opacity: 1; transform: translateY(0);} }
+.app-header { text-align: center; margin-bottom: 20px; color: var(--primary-dark); }
+.app-header h1 { font-size: 2rem; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 600;}
+.current-date { color: var(--text-light); font-size: 0.95rem; font-weight: 300; }
+
+.tab-menu { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 6px;}
+.tab-btn { padding: 10px 16px; background: none; border: none; cursor: pointer; font-size: 1rem; font-weight: 500; color: var(--text-medium); transition: var(--transition); position: relative; border-radius: 8px; }
+.tab-btn:hover { background-color: rgba(76, 175, 80, 0.1); }
+.tab-btn.active { color: var(--primary-dark); background-color: rgba(76, 175, 80, 0.2); }
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.5s ease; }
+
+.form-card, .material-calculator, .dashboard-card {
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  padding: 25px;
+  margin-bottom: 25px;
+  transition: var(--transition);
+  border-top: 4px solid var(--primary-light);
+}
+.material-calculator, .dashboard-card { border-top-color: var(--accent-color); }
+.form-card:hover, .material-calculator:hover, .dashboard-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; color: var(--primary-dark); }
+.card-header h2 { font-size: 1.3rem; font-weight: 600; }
+.card-header i { font-size: 1.1rem; color: var(--primary-light); }
+
+.form-group { margin-bottom: 16px; }
+.form-group label { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-weight: 500; color: var(--text-medium); font-size: 0.95rem;}
+.form-group input { width: 100%; padding: 14px 16px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem; transition: var(--transition); background-color: white;}
+.form-group input:focus { border-color: var(--primary-light); outline: none; box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2); }
+
+.output-box { padding: 14px 16px; border-radius: 8px; margin-top: 10px; font-size: 1.05rem; display: flex; justify-content: space-between; align-items: center; background-color: rgba(255, 255, 255, 0.7); box-shadow: var(--shadow-sm); }
+.output-box.revenue { border-left: 4px solid var(--success-color); color: var(--success-color); }
+.output-box.expense { border-left: 4px solid var(--warning-color); color: var(--warning-color); }
+.output-box.balance { border-left: 4px solid var(--primary-color); color: var(--primary-color); font-size: 1.2rem; font-weight: 600; background-color: rgba(139, 195, 74, 0.08); }
+
+.submit-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary-light), var(--primary-dark)); color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; box-shadow: var(--shadow-sm); }
+.submit-btn:hover { background: linear-gradient(135deg, var(--primary-dark), var(--primary-light)); transform: translateY(-2px); }
+
+.action-buttons { display: flex; gap: 12px; margin-top: 18px; }
+.action-btn { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #e0e0e0; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; background: white; }
+.action-btn.sheet-btn:hover { background-color: #f5f5f5; }
+
+.msg-box { margin-top: 16px; padding: 12px 14px; border-radius: 8px; text-align: center; font-weight: 600; background-color: rgba(255, 255, 255, 0.8); box-shadow: var(--shadow-sm); }
+.msg-box.success { background-color: rgba(56, 142, 60, 0.1); color: var(--success-color); }
+.msg-box.error { background-color: rgba(211, 47, 47, 0.1); color: var(--error-color); }
+.msg-box.loading { background-color: rgba(251, 192, 45, 0.1); color: var(--warning-color); }
+
+.input-group { margin-bottom: 16px; }
+.input-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-medium); }
+.input-group input { width: 100%; padding: 14px 16px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem; transition: var(--transition); background-color: white; }
+.input-group input:focus { border-color: var(--accent-color); outline: none; box-shadow: 0 0 0 3px rgba(139, 195, 74, 0.2); }
+
+.calc-buttons { display: flex; gap: 12px; margin-bottom: 10px; }
+.calc-btn { flex: 1; padding: 14px; background-color: var(--primary-light); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.calc-btn:hover { background-color: var(--primary-color); transform: translateY(-2px); }
+.calc-btn.reset { background: #f5f5f5; color: var(--text-medium); }
+.calc-btn.reset:hover { background: #e0e0e0; }
+
+.result-section { margin-top: 20px; }
+.result-table { width: 100%; border-collapse: collapse; margin-top: 10px; box-shadow: var(--shadow-sm); border-radius: var(--border-radius); overflow: hidden; }
+.result-table th, .result-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+.result-table th { background-color: var(--primary-light); color: white; font-weight: 600; }
+.result-table tr:nth-child(even) { background-color: rgba(139,195,74,0.05); }
+.result-value { font-weight: 600; color: var(--primary-dark); }
+
+.metric-box { text-align: center; padding: 1.2rem 1rem; border-radius: 12px; color: white; transition: transform 0.3s ease; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100px; }
+.metric-box:hover { transform: translateY(-4px); }
+.metric-box h2 { font-size: 1rem; margin-bottom: 0.35rem; font-weight: 600; opacity: 0.95; }
+.metric-box p { font-size: 1.8rem; font-weight: 800; }
+#totalSoldBox { background-color: #00b894; }
+#totalRevenueBox { background-color: #0984e3; }
+#totalExpenseBox { background-color: #d63031; }
+#totalProfitBox { background-color: #6c5ce7; }
+#profitMarginBox { background-color: #f39c12; }
+#avgSoldBox { background-color: #16a085; }
+#avgRevenueBox { background-color: #2c3e50; }
+#avgProfitBox { background-color: #8e44ad; }
+#growthRateBox { background-color: #27ae60; }
+
+.chart-container { width: 100%; height: 380px; }
+.table-container { overflow-x: auto; }
+.sortable-header { cursor: pointer; }
+
+.loading-overlay { position: fixed; top:0; left:0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 9999; }
+.lds-dual-ring { display: inline-block; width: 80px; height: 80px; }
+.lds-dual-ring:after { content:" "; display:block; width:64px; height:64px; margin:8px; border-radius:50%; border:6px solid #4CAF50; border-color:#4CAF50 transparent #4CAF50 transparent; animation:lds-dual-ring 1.2s linear infinite;}
+@keyframes lds-dual-ring { 0%{ transform: rotate(0deg);} 100%{ transform: rotate(360deg);} }
+
+@media (max-width: 768px) {
+  body { padding: 15px; }
+  .app-header h1 { font-size: 1.6rem; }
+  .card-header h2 { font-size: 1.2rem; }
+  .action-buttons, .calc-buttons { flex-direction: column; }
+  .form-card, .material-calculator { padding: 20px; }
+  .tab-menu { flex-direction: column; }
+  .tab-btn { border-radius: 8px; }
+}
+@media (max-width: 480px) {
+  .app-header h1 { font-size: 1.4rem; }
+  .form-group input, .input-group input { padding: 12px 14px; }
+  .output-box { font-size: 1rem; }
+  .output-box.balance { font-size: 1.1rem; }
+  .result-table th, .result-table td { padding: 10px 12px; font-size: 0.9rem; }
+}

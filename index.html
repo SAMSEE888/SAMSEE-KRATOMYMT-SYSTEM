@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSKratomYMT</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="style.css">
+  <meta name="theme-color" content="#2E7D32" />
+</head>
+<body>
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="lds-dual-ring"></div>
+  </div>
+
+  <div class="app-container">
+    <header class="app-header">
+      <h1><i class="fas fa-leaf"></i> SSKratomYMT</h1>
+      <div class="current-date" id="currentDate"></div>
+    </header>
+
+    <div class="tab-menu">
+      <button class="tab-btn active" data-tab="sales-tab"><i class="fas fa-chart-line"></i> บันทึกยอดขาย</button>
+      <button class="tab-btn" data-tab="dashboard-tab"><i class="fas fa-chart-bar"></i> แดชบอร์ดวิเคราะห์</button>
+      <button class="tab-btn" data-tab="material-tab"><i class="fas fa-calculator"></i> คำนวณวัตถุดิบ</button>
+      <button class="tab-btn" data-tab="backup-tab"><i class="fas fa-download"></i> สำรองข้อมูล</button>
+    </div>
+
+    <!-- SALES TAB -->
+    <div id="sales-tab" class="tab-content active">
+      <form id="saleForm">
+        <div class="form-card">
+          <div class="card-header">
+            <i class="fas fa-shopping-cart"></i><h2>ข้อมูลการขาย</h2>
+          </div>
+          <div class="form-group">
+            <label for="date"><i class="far fa-calendar-alt"></i> วันที่</label>
+            <input type="date" id="date" required />
+          </div>
+          <div class="form-group">
+            <label for="sold"><i class="fas fa-wine-bottle"></i> จำนวนที่ขาย (ขวด)</label>
+            <input type="number" id="sold" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="pending"><i class="fas fa-clock"></i> ค้างน้ำดิบ (ขวด)</label>
+            <input type="number" id="pending" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="cleared"><i class="fas fa-check-circle"></i> เคลียร์ยอดค้างน้ำดิบ (ขวด)</label>
+            <input type="number" id="cleared" min="0" value="0" />
+          </div>
+          <div class="output-box revenue">
+            <span>รายรับ:</span>
+            <strong id="revenue">0</strong> บาท
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="card-header">
+            <i class="fas fa-money-bill-wave"></i><h2>รายการค่าใช้จ่าย</h2>
+          </div>
+          <div class="form-group">
+            <label for="pipeFee"><i class="fas fa-tools"></i> ค่าท่อม</label>
+            <input type="number" id="pipeFee" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="shareFee"><i class="fas fa-handshake"></i> ค่าแชร์</label>
+            <input type="number" id="shareFee" min="0" value="100" />
+          </div>
+          <div class="form-group">
+            <label for="otherFee"><i class="fas fa-receipt"></i> ค่าใช้จ่ายอื่น</label>
+            <input type="number" id="otherFee" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="saveFee"><i class="fas fa-piggy-bank"></i> เก็บออมเงิน</label>
+            <input type="number" id="saveFee" min="0" value="500" />
+          </div>
+          <div class="output-box expense">
+            <span>รายจ่าย:</span>
+            <strong id="expense">0</strong> บาท
+          </div>
+        </div>
+
+        <div class="form-card summary">
+          <div class="card-header">
+            <i class="fas fa-calculator"></i><h2>สรุปยอด</h2>
+          </div>
+          <div class="output-box balance">
+            <span>ยอดคงเหลือ:</span>
+            <strong id="balance">0</strong> บาท
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn"><i class="fas fa-save"></i> บันทึกข้อมูล</button>
+      </form>
+
+      <div class="action-buttons">
+        <button class="action-btn sheet-btn" id="openSheetBtn">
+          <i class="fas fa-external-link-alt"></i> ดูประวัติในชีต
+        </button>
+      </div>
+
+      <div id="msg" class="msg-box"></div>
+    </div>
+
+    <!-- DASHBOARD TAB -->
+    <div id="dashboard-tab" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-header">
+          <i class="fas fa-chart-bar"></i><h2>ข้อมูลสรุปรายวัน / สัปดาห์ / เดือน / ปี</h2>
+        </div>
+
+        <div class="columns is-multiline is-centered">
+          <div class="column is-one-fifth-desktop is-half-tablet">
+            <div class="card metric-box" id="totalSoldBox">
+              <h2><i class="fas fa-boxes"></i> Items Sold</h2>
+              <p id="totalSold">-</p>
+            </div>
+          </div>
+          <div class="column is-one-fifth-desktop is-half-tablet">
+            <div class="card metric-box" id="totalRevenueBox">
+              <h2><i class="fas fa-sack-dollar"></i> Total Revenue</h2>
+              <p id="totalRevenue">-</p>
+            </div>
+          </div>
+          <div class="column is-one-fifth-desktop is-half-tablet">
+            <div class="card metric-box" id="totalExpenseBox">
+              <h2><i class="fas fa-receipt"></i> Total Expense</h2>
+              <p id="totalExpense">-</p>
+            </div>
+          </div>
+          <div class="column is-one-fifth-desktop is-half-tablet">
+            <div class="card metric-box" id="totalProfitBox">
+              <h2><i class="fas fa-chart-line"></i> Total Profit</h2>
+              <p id="totalProfit">-</p>
+            </div>
+          </div>
+          <div class="column is-one-fifth-desktop is-half-tablet">
+            <div class="card metric-box" id="profitMarginBox">
+              <h2><i class="fas fa-percentage"></i> Profit Margin</h2>
+              <p id="profitMargin">-</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="columns is-multiline is-centered mt-2">
+          <div class="column is-one-fifth-desktop is-half-tablet">
+            <div class="card metric-box" id="avgSoldBox">
+              <h2><i class="fas fa-box-open"></i> Avg Sold</h2>
+              <p id="avgSold">-</p>
+            </div>
+          </div>
+          <div class="column is-one-fifth-desktop is-half-tablet">
+            <div class="card metric-box" id="avgRevenueBox">
+              <h2><i class="fas fa-coins"></i> Avg Revenue</h2>
+              <p id="avgRevenue">-</p>
+            </div>
+          </div>
+          <div class="column is-one-fifth-desktop is-half-tablet">
+            <div class="card metric-box" id="avgProfitBox">
+              <h2><i class="fas fa-hand-holding-dollar"></i> Avg Profit</h2>
+              <p id="avgProfit">-</p>
+            </div>
+          </div>
+          <div class="column is-one-fifth-desktop is-half-tablet">
+            <div class="card metric-box" id="growthRateBox">
+              <h2><i class="fas fa-arrow-trend-up"></i> Growth Rate</h2>
+              <p id="growthRate">-</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="field is-grouped is-grouped-multiline is-justify-content-center mt-5">
+          <div class="control">
+            <div class="select">
+              <select id="filterTimeframe">
+                <option value="day">รายวัน</option>
+                <option value="week">รายสัปดาห์</option>
+                <option value="month" selected>รายเดือน</option>
+                <option value="year">รายปี</option>
+                <option value="all">ทั้งหมด</option>
+              </select>
+            </div>
+          </div>
+          <div class="control">
+            <input type="date" id="filterStartDate" class="input" placeholder="วันที่เริ่ม">
+          </div>
+          <div class="control">
+            <input type="date" id="filterEndDate" class="input" placeholder="วันที่สิ้นสุด">
+          </div>
+          <div class="control">
+            <button class="button is-link" id="applyFilterBtn"><i class="fas fa-filter"></i>&nbsp;Apply</button>
+          </div>
+          <div class="control">
+            <button class="button" id="resetFilterBtn"><i class="fas fa-rotate-left"></i>&nbsp;Reset</button>
+          </div>
+        </div>
+
+        <div class="columns is-multiline mt-5">
+          <div class="column is-two-thirds">
+            <div class="card p-5">
+              <h2 class="title is-4 has-text-centered">Sold / Revenue / Expense / Balance Trend</h2>
+              <div class="chart-container"><canvas id="salesChart"></canvas></div>
+            </div>
+          </div>
+          <div class="column is-one-third">
+            <div class="card p-5">
+              <h2 class="title is-4 has-text-centered">Fee & Expense Breakdown</h2>
+              <div class="chart-container"><canvas id="feesChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-5 mt-5">
+          <div class="level">
+            <h2 class="title is-4">รายการย้อนหลัง</h2>
+            <div>
+              <button class="button is-small is-info" id="show50Btn">50 รายการล่าสุด</button>
+              <button class="button is-small" id="showAllBtn">แสดงทั้งหมดตามตัวกรอง</button>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="table is-hoverable is-fullwidth">
+              <thead>
+                <tr>
+                  <th class="sortable-header" data-sort="date">Date <i class="fas fa-sort"></i></th>
+                  <th class="sortable-header" data-sort="sold">Sold <i class="fas fa-sort"></i></th>
+                  <th class="sortable-header" data-sort="revenue">Revenue <i class="fas fa-sort"></i></th>
+                  <th class="sortable-header" data-sort="expense">Expense <i class="fas fa-sort"></i></th>
+                  <th class="sortable-header" data-sort="balance">Balance <i class="fas fa-sort"></i></th>
+                </tr>
+              </thead>
+              <tbody id="dataTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MATERIAL TAB -->
+    <div id="material-tab" class="tab-content">
+      <div class="material-calculator">
+        <h2><i class="fas fa-leaf"></i> คำนวณวัตถุดิบผลิตน้ำกระท่อม</h2>
+        <p class="subtitle is-6">กรอกข้อมูลอย่างน้อยหนึ่งช่องเพื่อคำนวณ</p>
+        
+        <div class="input-group">
+          <label for="leafInput"><i class="fas fa-leaf"></i> จำนวนใบกระท่อม (กิโลกรัม)</label>
+          <input type="number" id="leafInput" min="0" placeholder="กรอกจำนวนใบกระท่อม">
+        </div>
+        <div class="input-group">
+          <label for="waterInput"><i class="fas fa-tint"></i> จำนวนน้ำ (ลิตร)</label>
+          <input type="number" id="waterInput" min="0" placeholder="กรอกจำนวนน้ำ">
+        </div>
+        <div class="input-group">
+          <label for="yieldInput"><i class="fas fa-wine-bottle"></i> จำนวนน้ำกระท่อมดิบที่ต้องการ (ลิตร)</label>
+          <input type="number" id="yieldInput" min="0" placeholder="กรอกจำนวนน้ำกระท่อมที่ต้องการ">
+        </div>
+        
+        <div class="calc-buttons">
+          <button id="calculateButton" class="calc-btn"><i class="fas fa-calculator"></i> คำนวณ</button>
+          <button id="resetButton" class="calc-btn reset"><i class="fas fa-redo"></i> รีเซ็ต</button>
+        </div>
+        
+        <div class="result-section" id="resultContainer" style="display: none;">
+          <h3><i class="fas fa-chart-bar"></i> ผลลัพธ์การคำนวณ</h3>
+          <table class="result-table">
+            <thead>
+              <tr>
+                <th>วิธีการผลิต</th>
+                <th>ใบกระท่อม (กก.)</th>
+                <th>น้ำ (ลิตร)</th>
+                <th>น้ำกระท่อมดิบ (ลิตร)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>วิธีบดใบกระท่อม</strong></td>
+                <td class="result-value" id="resultGroundLeaf">0.00</td>
+                <td class="result-value" id="resultGroundWater">0.00</td>
+                <td class="result-value" id="resultGroundYield">0.00</td>
+              </tr>
+              <tr>
+                <td><strong>วิธีไม่บดใบ (0.65)</strong></td>
+                <td class="result-value" id="resultNotGroundLeaf1">0.00</td>
+                <td class="result-value" id="resultNotGroundWater1">0.00</td>
+                <td class="result-value" id="resultNotGroundYield1">0.00</td>
+              </tr>
+              <tr>
+                <td><strong>วิธีไม่บดใบ (0.63)</strong></td>
+                <td class="result-value" id="resultNotGroundLeaf2">0.00</td>
+                <td class="result-value" id="resultNotGroundWater2">0.00</td>
+                <td class="result-value" id="resultNotGroundYield2">0.00</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BACKUP TAB -->
+    <div id="backup-tab" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-header">
+          <i class="fas fa-download"></i><h2>สำรองข้อมูล (Download backup)</h2>
+        </div>
+        <div class="buttons">
+          <button class="button is-link" id="downloadCSV"><i class="fas fa-file-csv"></i>&nbsp; ดาวน์โหลด CSV</button>
+          <button class="button is-dark" id="downloadJSON"><i class="fas fa-file-code"></i>&nbsp; ดาวน์โหลด JSON</button>
+        </div>
+        <p class="is-size-7 has-text-grey">* ไฟล์ที่ดาวน์โหลดคือข้อมูลจาก Google Sheets ทั้งหมด ณ ปัจจุบัน</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(console.error);
+    });
+  }
+</script>
