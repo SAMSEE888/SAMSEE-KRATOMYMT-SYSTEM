@@ -1,9 +1,9 @@
 // ========== SSKratomYMT Google Apps Script Backend ==========
 // ตั้งค่า Spreadsheet และชีต
 const SPREADSHEET_ID = "11vhg37MbHRm53SSEHLsCI3EBXx5_meXVvlRuqhFteaY"; // เปลี่ยนเป็นของคุณ
-const SHEET_NAME = "SaleForm"; // เปลี่ยนให้ตรงกับแท็บของคุณ
+const SHEET_NAME = "SaleForm"; // ต้องตรงกับชื่อแท็บใน Google Sheets
 
-// โครงสร้างคอลัมน์: [date, sold, pending, cleared, revenue, pipeFee, shareFee, otherFee, saveFee, expense, balance, timestamp]
+// โครงสร้างคอลัมน์
 const HEADERS = ["date","sold","pending","cleared","revenue","pipeFee","shareFee","otherFee","saveFee","expense","balance","timestamp"];
 
 function _sheet() {
@@ -12,70 +12,71 @@ function _sheet() {
 
 // --- Web App Entry ---
 function doGet(e) {
-  const action = (e.parameter && e.parameter.action) || "";
-  if (action === "getData") {
-    return _json(getDataObjects());
-  }
-  if (action === "backup") {
-    const type = (e.parameter && e.parameter.type) || "csv";
-    if (type === "json") {
-      const data = getDataObjects();
-      const out = JSON.stringify(data, null, 2);
-      return ContentService
-        .createTextOutput(out)
-        .setMimeType(ContentService.MimeType.JSON);
-    } else {
-      const csv = exportCSV();
-      return ContentService
-        .createTextOutput(csv)
-        .setMimeType(ContentService.MimeType.CSV);
-    }
-  }
-  return ContentService.createTextOutput("SSKratomYMT API is running.");
-}
-
-function doPost(e) {
   try {
-    const data = JSON.parse(e.postData.contents);
-    const s = _sheet();
-    if (!s) throw new Error("ไม่พบชีต: " + SHEET_NAME);
-
-    const row = [
-      new Date(data.date),
-      Number(data.sold)||0,
-      Number(data.pending)||0,
-      Number(data.cleared)||0,
-      Number(data.revenue)||0,
-      Number(data.pipeFee)||0,
-      Number(data.shareFee)||0,
-      Number(data.otherFee)||0,
-      Number(data.saveFee)||0,
-      Number(data.expense)||0,
-      Number(data.balance)||0,
-      new Date()
-    ];
-    s.appendRow(row);
-
-    return _json({ success: true });
+    const action = (e.parameter && e.parameter.action) || "";
+    if (action === "getData") {
+      return _json(getDataObjects());
+    }
+    if (action === "backup") {
+      const type = (e.parameter && e.parameter.type) || "csv";
+      if (type === "json") {
+        const data = getDataObjects();
+        return _json(data);
+      } else {
+        return ContentService
+          .createTextOutput(exportCSV())
+          .setMimeType(ContentService.MimeType.CSV);
+      }
+    }
+    return ContentService.createTextOutput("✅ SSKratomYMT API is running.");
   } catch (err) {
     return _json({ success: false, error: err.message });
   }
 }
 
-// ดึงข้อมูลทั้งหมดเป็น Array<Object>
+function doPost(e) {
+  try {
+    if (!e || !e.postData || !e.postData.contents) {
+      throw new Error("No POST data received.");
+    }
+    const data = JSON.parse(e.postData.contents);
+    const s = _sheet();
+    if (!s) throw new Error("ไม่พบชีต: " + SHEET_NAME);
+
+    const row = [
+      data.date ? new Date(data.date) : new Date(),
+      Number(data.sold) || 0,
+      Number(data.pending) || 0,
+      Number(data.cleared) || 0,
+      Number(data.revenue) || 0,
+      Number(data.pipeFee) || 0,
+      Number(data.shareFee) || 0,
+      Number(data.otherFee) || 0,
+      Number(data.saveFee) || 0,
+      Number(data.expense) || 0,
+      Number(data.balance) || 0,
+      new Date()
+    ];
+    s.appendRow(row);
+
+    return _json({ success: true, message: "บันทึกข้อมูลสำเร็จ" });
+  } catch (err) {
+    return _json({ success: false, error: err.message });
+  }
+}
+
+// --- Utility Functions ---
 function getDataObjects() {
   const s = _sheet();
-  const range = s.getDataRange();
-  const values = range.getValues();
-  // หากมี header แถวแรก ให้ตรวจสอบและข้าม
+  const values = s.getDataRange().getValues();
   let start = 0;
-  if (values.length && typeof values[0][0] === 'string' && values[0][0].toLowerCase().includes('date')) start = 1;
+  if (values.length && String(values[0][0]).toLowerCase().includes("date")) start = 1;
 
   const out = [];
   for (let r = start; r < values.length; r++) {
     const v = values[r];
     out.push({
-      date: Utilities.formatDate(new Date(v[0]), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+      date: v[0] ? Utilities.formatDate(new Date(v[0]), Session.getScriptTimeZone(), 'yyyy-MM-dd') : "",
       sold: Number(v[1])||0,
       pending: Number(v[2])||0,
       cleared: Number(v[3])||0,
@@ -91,7 +92,6 @@ function getDataObjects() {
   return out;
 }
 
-// ส่งออก CSV
 function exportCSV() {
   const data = getDataObjects();
   const header = ["date","sold","pending","cleared","revenue","pipeFee","shareFee","otherFee","saveFee","expense","balance"];
@@ -102,7 +102,8 @@ function exportCSV() {
   return rows.join("\n");
 }
 
-// helper for JSON response
 function _json(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
