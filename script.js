@@ -107,7 +107,6 @@ function initSalesForm() {
     showMsg('⏳ กำลังบันทึกข้อมูล...', 'loading');
     showLoading(true);
     try {
-      // Apps Script doPost มักจะทำงานกับ content-type 'text/plain' ได้ดีกว่า
       const res = await fetch(CONFIG.API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -122,7 +121,7 @@ function initSalesForm() {
         form.reset();
         $("#date").value = todayISO();
         calculateAll();
-        window.dashboardLoaded = false; // บังคับให้โหลดข้อมูลใหม่เมื่อไปที่แท็บ Dashboard
+        window.dashboardLoaded = false;
       } else {
         throw new Error(result.error || 'Unknown error from server');
       }
@@ -142,37 +141,69 @@ function showMsg(text, type) {
   setTimeout(() => m.style.display = 'none', 5000);
 }
 
-
 // ---------- Material Calculator ----------
+// [ปรับปรุง] เปลี่ยนชื่อตัวแปรและจัดรูปแบบให้อ่านง่ายขึ้น
 function initMaterialCalc() {
-    const leafInput = $("#leafInput"), waterInput = $("#waterInput"), yieldInput = $("#yieldInput"), resultContainer = $("#resultContainer");
-    $("#calculateButton").addEventListener('click', e => {
+    const leafInput = $("#leafInput");
+    const waterInput = $("#waterInput");
+    const yieldInput = $("#yieldInput");
+    const resultContainer = $("#resultContainer");
+
+    $("#calculateButton").addEventListener('click', (e) => {
         e.preventDefault();
-        const leaf = parseNum(leafInput.value), water = parseNum(waterInput.value), desired = parseNum(yieldInput.value);
-        if (leaf < 0 || water < 0 || desired < 0) return alert('⚠️ กรุณากรอกค่าที่เป็นบวกเท่านั้น!');
-        if (!leaf && !water && !desired) return alert('⚠️ กรุณากรอกค่าข้อมูลอย่างน้อยหนึ่งช่อง!');
-        const ratios = {g: {l2w: 20, w2y: 15 / 20}, n1: {l2w: 15.38, w2y: 12 / 15.38}, n2: {l2w: 15.87302, w2y: 12 / 15.87302}};
-        let r = {};
-        if (leaf > 0) {
-            r.g = {l: leaf, w: leaf * ratios.g.l2w, y: leaf * ratios.g.l2w * ratios.g.w2y};
-            r.n1 = {l: leaf, w: leaf * ratios.n1.l2w, y: leaf * ratios.n1.l2w * ratios.n1.w2y};
-            r.n2 = {l: leaf, w: leaf * ratios.n2.l2w, y: leaf * ratios.n2.l2w * ratios.n2.w2y};
-        } else if (water > 0) {
-            r.g = {w: water, l: water / ratios.g.l2w, y: water * ratios.g.w2y};
-            r.n1 = {w: water, l: water / ratios.n1.l2w, y: water * ratios.n1.w2y};
-            r.n2 = {w: water, l: water / ratios.n2.l2w, y: water * ratios.n2.w2y};
+        const leafAmount = parseNum(leafInput.value);
+        const waterAmount = parseNum(waterInput.value);
+        const desiredYield = parseNum(yieldInput.value);
+
+        if (leafAmount < 0 || waterAmount < 0 || desiredYield < 0) return alert('⚠️ กรุณากรอกค่าที่เป็นบวกเท่านั้น!');
+        if (!leafAmount && !waterAmount && !desiredYield) return alert('⚠️ กรุณากรอกค่าข้อมูลอย่างน้อยหนึ่งช่อง!');
+        
+        const recipes = {
+            ground: { leafToWater: 20, waterToYield: 15 / 20 },
+            notGround1: { leafToWater: 15.38, waterToYield: 12 / 15.38 },
+            notGround2: { leafToWater: 15.87302, waterToYield: 12 / 15.87302 }
+        };
+        
+        let results = {};
+
+        if (leafAmount > 0) {
+            results.ground = { leaf: leafAmount, water: leafAmount * recipes.ground.leafToWater, yield: leafAmount * recipes.ground.leafToWater * recipes.ground.waterToYield };
+            results.notGround1 = { leaf: leafAmount, water: leafAmount * recipes.notGround1.leafToWater, yield: leafAmount * recipes.notGround1.leafToWater * recipes.notGround1.waterToYield };
+            results.notGround2 = { leaf: leafAmount, water: leafAmount * recipes.notGround2.leafToWater, yield: leafAmount * recipes.notGround2.leafToWater * recipes.notGround2.waterToYield };
+        } else if (waterAmount > 0) {
+            results.ground = { water: waterAmount, leaf: waterAmount / recipes.ground.leafToWater, yield: waterAmount * recipes.ground.waterToYield };
+            results.notGround1 = { water: waterAmount, leaf: waterAmount / recipes.notGround1.leafToWater, yield: waterAmount * recipes.notGround1.waterToYield };
+            results.notGround2 = { water: waterAmount, leaf: waterAmount / recipes.notGround2.leafToWater, yield: waterAmount * recipes.notGround2.waterToYield };
         } else {
-            r.g = {y: desired, w: desired / ratios.g.w2y, l: (desired / ratios.g.w2y) / ratios.g.l2w};
-            r.n1 = {y: desired, w: desired / ratios.n1.w2y, l: (desired / ratios.n1.w2y) / ratios.n1.l2w};
-            r.n2 = {y: desired, w: desired / ratios.n2.w2y, l: (desired / ratios.n2.w2y) / ratios.n2.l2w};
+            results.ground = { yield: desiredYield, water: desiredYield / recipes.ground.waterToYield, leaf: (desiredYield / recipes.ground.waterToYield) / recipes.ground.leafToWater };
+            results.notGround1 = { yield: desiredYield, water: desiredYield / recipes.notGround1.waterToYield, leaf: (desiredYield / recipes.notGround1.waterToYield) / recipes.notGround1.leafToWater };
+            results.notGround2 = { yield: desiredYield, water: desiredYield / recipes.notGround2.waterToYield, leaf: (desiredYield / recipes.notGround2.waterToYield) / recipes.notGround2.leafToWater };
         }
-        $("#resultGroundLeaf").textContent = r.g.l.toFixed(2); $("#resultGroundWater").textContent = r.g.w.toFixed(2); $("#resultGroundYield").textContent = r.g.y.toFixed(2);
-        $("#resultNotGroundLeaf1").textContent = r.n1.l.toFixed(2); $("#resultNotGroundWater1").textContent = r.n1.w.toFixed(2); $("#resultNotGroundYield1").textContent = r.n1.y.toFixed(2);
-        $("#resultNotGroundLeaf2").textContent = r.n2.l.toFixed(2); $("#resultNotGroundWater2").textContent = r.n2.w.toFixed(2); $("#resultNotGroundYield2").textContent = r.n2.y.toFixed(2);
+
+        $("#resultGroundLeaf").textContent = results.ground.leaf.toFixed(2);
+        $("#resultGroundWater").textContent = results.ground.water.toFixed(2);
+        $("#resultGroundYield").textContent = results.ground.yield.toFixed(2);
+        
+        $("#resultNotGroundLeaf1").textContent = results.notGround1.leaf.toFixed(2);
+        $("#resultNotGroundWater1").textContent = results.notGround1.water.toFixed(2);
+        $("#resultNotGroundYield1").textContent = results.notGround1.yield.toFixed(2);
+
+        $("#resultNotGroundLeaf2").textContent = results.notGround2.leaf.toFixed(2);
+        $("#resultNotGroundWater2").textContent = results.notGround2.water.toFixed(2);
+        $("#resultNotGroundYield2").textContent = results.notGround2.yield.toFixed(2);
+
         resultContainer.style.display = 'block';
     });
-    $("#resetButton").addEventListener('click', e => { e.preventDefault(); leafInput.value = ""; waterInput.value=""; yieldInput.value=""; resultContainer.style.display = 'none'; });
+
+    $("#resetButton").addEventListener('click', (e) => {
+        e.preventDefault();
+        leafInput.value = "";
+        waterInput.value = "";
+        yieldInput.value = "";
+        resultContainer.style.display = 'none';
+    });
 }
+
 
 // ---------- Dashboard ----------
 let salesChart, feesChart, originalData = [], sortState = {};
@@ -293,7 +324,8 @@ function initBackup() {
 async function downloadBackup(type = 'csv') {
     showLoading(true);
     try {
-        const url = `${CONFIG.API_URL}?action=backup&type=${type}`;
+        // [แก้ไข] เปลี่ยน 'action=backup' เป็น 'action=export' ให้ตรงกับ Backend
+        const url = `${CONFIG.API_URL}?action=export&type=${type}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error(`ดาวน์โหลดไม่สำเร็จ (Status: ${res.status})`);
         const blob = await res.blob();
