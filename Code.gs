@@ -1,134 +1,181 @@
-// ========== SSKratomYMT Google Apps Script Backend (ฉบับแก้ไขวันที่) ==========
+/**
+ * =================================================================
+ * SSKratomYMT Google Apps Script Backend (ฉบับแก้ไขสมบูรณ์)
+ * =================================================================
+ */
 
-// --- การตั้งค่าหลัก ---
-const SPREADSHEET_ID = "11vhg37MbHRm53SSEHLsCI3EBXx5_meXVvlRuqhFteaY"; // ID ของ Google Sheet
-const SHEET_NAME = "SaleForm"; // ชื่อชีต (แท็บ) ที่จะบันทึกข้อมูล
+// --- การตั้งค่าทั่วไป ---
+const SPREADSHEET_ID = '11vhg37MbHRm53SSEHLsCI3EBXx5_meXVvlRuqhFteaY'; // <-- ใส่ ID ของ Google Sheet ที่นี่
 
-// โครงสร้างคอลัมน์
-const HEADERS = ["date", "sold", "pending", "cleared", "revenue", "pipeFee", "shareFee", "otherFee", "saveFee", "expense", "balance", "timestamp"];
+const SHEET_NAME = 'SaleForm';
 
+// --- กำหนดหัวข้อคอลัมน์ (Headers) ---
+// **สำคัญ:** ลำดับต้องตรงกับคอลัมน์ใน Google Sheet ของคุณ
+const HEADERS = [
+  'date', 'sold', 'pending', 'cleared', 'revenue', 'pipefee', 
+  'sharefee', 'otherfee', 'savefee', 'expense', 'balance', 'timestamp'
+];
+
+
+/**
+ * =================================================================
+ * ส่วนของโค้ดหลัก (ไม่ต้องแก้ไขส่วนนี้)
+ * =================================================================
+ */
+
+/**
+ * ฟังก์ชัน Helper สำหรับการเข้าถึงชีต
+ */
 function _sheet() {
-  try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    let sheet = ss.getSheetByName(SHEET_NAME);
-    if (!sheet) {
-      sheet = ss.insertSheet(SHEET_NAME);
-      sheet.appendRow(HEADERS);
-    }
-    return sheet;
-  } catch (e) {
-    console.error("เกิดข้อผิดพลาดในการเข้าถึง Spreadsheet: " + e.message);
-    throw new Error("ไม่สามารถเข้าถึง Spreadsheet ID ที่ระบุได้");
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    // หากสร้างชีตใหม่ ให้เพิ่มหัวคอลัมน์เข้าไปด้วย
+    sheet.appendRow(HEADERS);
   }
+  return sheet;
 }
 
+/**
+ * ฟังก์ชัน Helper สำหรับการตอบกลับเป็น JSON response
+ */
 function _json(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// --- Web App Entries ---
+
+/**
+ * Web App Entries (doGet, doPost)
+ */
 
 function doGet(e) {
-  const action = e.parameter.action || "";
+  const action = e.parameter.action || '';
+
   try {
     if (action === "getData") {
       return _json(getDataObjects());
     }
-    if (action === "backup") {
-      const type = e.parameter.type || "csv";
-      if (type === "json") {
-        const data = getDataObjects();
-        const jsonString = JSON.stringify(data, null, 2);
-        return ContentService.createTextOutput(jsonString).setMimeType(ContentService.MimeType.JSON);
+
+    if (action === "export") {
+      const type = e.parameter.type || 'csv';
+      const data = getDataObjects();
+
+      if (type === 'json') {
+        // ... (ส่วนนี้ยังไม่ได้ใช้งาน แต่เก็บไว้เผื่ออนาคต)
+        return ContentService.createTextOutput(data, null, 2)
+          .setMimeType(ContentService.MimeType.JSON);
       } else {
-        const csv = exportCSV();
+        // ส่งออกเป็น CSV
+        const csv = exportCSV(data);
         return ContentService.createTextOutput(csv).setMimeType(ContentService.MimeType.CSV);
       }
     }
-    return ContentService.createTextOutput("SSKratomYMT API is running.");
+    
+    // หากไม่มี action ที่ระบุ ให้ตอบกลับว่า API ทำงานอยู่
+    return ContentService.createTextOutput("SSKratomYMT API is running.")
+      .setMimeType(ContentService.MimeType.TEXT);
+
   } catch (err) {
     return _json({ success: false, error: "Server error: " + err.message });
   }
 }
 
+
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-    
+
+    // ตรวจสอบว่ามีข้อมูล 'date' ส่งมาหรือไม่
     if (!data || !data.date) {
-      throw new Error("ข้อมูลไม่ถูกต้องหรือไม่พบวันที่ (date)");
+      throw new Error("ข้อมูลไม่ถูกต้องหรือไม่พบข้อมูลวันที่ (date)");
     }
-
-    const s = _sheet();
-    if (!s) throw new Error("ไม่พบชีต: " + SHEET_NAME);
     
-    // --- จุดที่แก้ไข ---
-    // สร้าง Date object จากสตริงวันที่ YYYY-MM-DD ที่ได้รับมา
-    // โดยการแทนที่ '-' ด้วย '/' จะช่วยให้ JavaScript ตีความเป็นโซนเวลาท้องถิ่น (Local Time) แทนที่จะเป็น UTC
-    // ซึ่งจะแก้ปัญหาวันที่ถูกบันทึกผิดเพี้ยนไปหนึ่งวัน
-    const localDate = new Date(data.date.replace(/-/g, '/'));
+    const s = _sheet();
 
+    // ================== ส่วนที่แก้ไขปัญหาเรื่องวันที่ ==================
+    // 1. แยกส่วนประกอบของวันที่จากสตริง 'YYYY-MM-DD' ที่ส่งมา
+    const dateParts = data.date.split('-');
+    const year = parseInt(dateParts[0], 10);
+    const month = parseInt(dateParts[1], 10) - 1; // เดือนใน JavaScript เริ่มนับจาก 0 (ม.ค.=0)
+    const day = parseInt(dateParts[2], 10);
+
+    // 2. สร้าง Date object ขึ้นมาใหม่โดยใช้โซนเวลาท้องถิ่นของสคริปต์
+    // วิธีนี้จะทำให้ได้วันที่ที่ถูกต้องตรงตามที่ผู้ใช้เลือกเสมอ
+    const correctDate = new Date(year, month, day);
+    // ================================================================
+
+    // เตรียมข้อมูลสำหรับบันทึกลงแถวใหม่
     const row = [
-      localDate, // ใช้วันที่ที่แปลงแล้ว
+      correctDate, // <-- ใช้ตัวแปรวันที่ที่แก้ไขแล้ว
       Number(data.sold) || 0,
       Number(data.pending) || 0,
       Number(data.cleared) || 0,
       Number(data.revenue) || 0,
-      Number(data.pipeFee) || 0,
-      Number(data.shareFee) || 0,
-      Number(data.otherFee) || 0,
-      Number(data.saveFee) || 0,
+      Number(data.pipefee) || 0,
+      Number(data.sharefee) || 0,
+      Number(data.otherfee) || 0,
+      Number(data.savefee) || 0,
       Number(data.expense) || 0,
       Number(data.balance) || 0,
-      new Date() // Timestamp
+      new Date() // Timestamp สำหรับการบันทึกข้อมูล ณ เวลานั้นๆ
     ];
 
     s.appendRow(row);
 
     return _json({ success: true, message: "บันทึกข้อมูลเรียบร้อย" });
+
   } catch (err) {
     console.error("doPost Error:", err.message);
     return _json({ success: false, error: err.message });
   }
 }
 
-// --- Data Functions ---
+
+/**
+ * Data Functions
+ */
 
 function getDataObjects() {
-  const s = _sheet();
-  const range = s.getDataRange();
+  const range = _sheet().getDataRange();
   const values = range.getValues();
+  const timezone = Session.getScriptTimeZone();
 
-  if (values.length <= 1) return [];
+  if (values.length <= 1) return []; // ถ้ามีแต่หัวข้อ หรือไม่มีข้อมูลเลย
 
-  const headers = values[0].map(h => String(h).toLowerCase());
-  
+  const headers = values[0].map(h => String(h).toLowerCase().trim());
+  const scriptTimeZone = Session.getScriptTimeZone();
   const out = [];
+
+  // เริ่มจากแถวที่ 1 (ข้อมูลแถวแรก) เพราะแถวที่ 0 คือ Header
   for (let r = 1; r < values.length; r++) {
-    const v = values[r];
-    if (!v[0]) continue; // ข้ามแถวที่ไม่มีวันที่
+    const rowValues = values[r];
+    if (rowValues.every(v => v === '')) continue; // ข้ามแถวที่ว่างเปล่า
 
     const obj = {};
     headers.forEach((h, i) => {
-        if (h === 'date' && v[i] instanceof Date) {
-            // จัดรูปแบบวันที่ให้เป็น YYYY-MM-DD โดยใช้โซนเวลาของสคริปต์
-            obj[h] = Utilities.formatDate(v[i], Session.getScriptTimeZone(), 'yyyy-MM-dd');
-        } else if (h && h !== 'timestamp') {
-            obj[h] = v[i];
-        }
+      let v = rowValues[i];
+      // ตรวจสอบว่าเป็นข้อมูลวันที่หรือไม่ และแปลงให้เป็นรูปแบบ YYYY-MM-DD
+      if (h === 'date' && v instanceof Date) {
+        obj[h] = Utilities.formatDate(v, scriptTimeZone, 'yyyy-MM-dd');
+      } else if (h === 'timestamp' && v instanceof Date) {
+        obj[h] = Utilities.formatDate(v, scriptTimeZone, 'yyyy-MM-dd HH:mm:ss');
+      } else {
+        obj[h] = v;
+      }
     });
     out.push(obj);
   }
   return out;
 }
 
-function exportCSV() {
-  const data = getDataObjects();
-  const header = HEADERS.filter(h => h !== 'timestamp');
-  const rows = [header.join(",")];
-  data.forEach(d => {
-    rows.push(header.map(h => d[h]).join(","));
+function exportCSV(data) {
+  // กรองเอา 'timestamp' ออกจากหัวข้อของ CSV
+  const header = HEADERS.filter(h => h !== 'timestamp').join(",");
+  const rows = data.map(d => {
+    // สร้างแถวข้อมูลตามลำดับของ HEADERS (ยกเว้น timestamp)
+    return HEADERS.filter(h => h !== 'timestamp').map(h_key => d[h_key] || "").join(",");
   });
-  return rows.join("\n");
+  return [header, ...rows].join("\n");
 }
