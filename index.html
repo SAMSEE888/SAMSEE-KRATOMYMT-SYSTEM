@@ -42,15 +42,15 @@
           </div>
           <div class="form-group">
             <label for="sold"><i class="fas fa-wine-bottle"></i> จำนวนที่ขาย (ขวด)</label>
-            <input type="number" id="sold" min="0" value="0" />
+            <input type="number" id="sold" min="0" value="" />
           </div>
           <div class="form-group">
             <label for="pending"><i class="fas fa-clock"></i> ค้างน้ำดิบ (ขวด)</label>
-            <input type="number" id="pending" min="0" value="0" />
+            <input type="number" id="pending" min="0" value="" />
           </div>
           <div class="form-group">
             <label for="cleared"><i class="fas fa-check-circle"></i> เคลียร์ยอดค้างน้ำดิบ (ขวด)</label>
-            <input type="number" id="cleared" min="0" value="0" />
+            <input type="number" id="cleared" min="0" value="" />
           </div>
           <div class="output-box revenue">
             <span>รายรับ:</span>
@@ -64,16 +64,15 @@
           </div>
           <div class="form-group">
             <label for="pipeFee"><i class="fas fa-tools"></i> ค่าท่อม</label>
-            <input type="number" id="pipeFee" min="0" value="0" />
+            <input type="number" id="pipeFee" min="0" value="" />
           </div>
           <div class="form-group">
             <label for="shareFee"><i class="fas fa-handshake"></i> ค่าแชร์</label>
-            <input type="number" id="shareFee" min="0" value="1
-              0" />
+            <input type="number" id="shareFee" min="0" value="" />
           </div>
           <div class="form-group">
             <label for="otherFee"><i class="fas fa-receipt"></i> ค่าใช้จ่ายอื่น</label>
-            <input type="number" id="otherFee" min="0" value="0" />
+            <input type="number" id="otherFee" min="0" value="" />
           </div>
           <div class="form-group">
             <label for="saveFee"><i class="fas fa-piggy-bank"></i> เก็บออมเงิน</label>
@@ -102,6 +101,7 @@
         <button class="action-btn sheet-btn" id="openSheetBtn">
           <i class="fas fa-external-link-alt"></i> ดูประวัติในชีต
         </button>
+
       </div>
 
       <div id="msg" class="msg-box"></div>
@@ -318,11 +318,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="script.js"></script>
-
 </body>
 </html>
 
-  <script>
+<script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('service-worker.js').catch(console.error);

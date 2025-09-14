@@ -1,180 +1,109 @@
-/**
- * =================================================================
- * SSKratomYMT Google Apps Script Backend (ฉบับแก้ไขสมบูรณ์)
- * =================================================================
- */
+// ========== SSKratomYMT Google Apps Script Backend ==========
+// ตั้งค่า Spreadsheet และชีต
+const SPREADSHEET_ID = "11vhg37MbHRm53SSEHLsCI3EBXx5_meXVvlRuqhFteaY"; // เปลี่ยนเป็นของคุณ
+const SHEET_NAME = "SaleForm"; // ต้องตรงกับชื่อแท็บใน Google Sheets
 
-// --- การตั้งค่าทั่วไป ---
-const SPREADSHEET_ID = '11vhg37MbHRm53SSEHLsCI3EBXx5_meXVvlRuqhFteaY';
-const SHEET_NAME = 'SaleForm';
-
-// --- กำหนดหัวข้อคอลัมน์ (Headers) ---
-const HEADERS = [
-  'date', 'sold', 'pending', 'cleared', 'revenue', 'pipefee', 
-  'sharefee', 'otherfee', 'savefee', 'expense', 'balance', 'timestamp'
-];
-
-/**
- * =================================================================
- * ส่วนของโค้ดหลัก (แก้ไขแล้ว)
- * =================================================================
- */
+// โครงสร้างคอลัมน์
+const HEADERS = ["date","sold","pending","cleared","revenue","pipeFee","shareFee","otherFee","saveFee","expense","balance","timestamp"];
 
 function _sheet() {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet) {
-    sheet = ss.insertSheet(SHEET_NAME);
-    sheet.appendRow(HEADERS);
-  }
-  return sheet;
+  return SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
 }
 
-function _json(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
+// --- Web App Entry ---
 function doGet(e) {
-  const action = e.parameter.action || '';
-
   try {
+    const action = (e.parameter && e.parameter.action) || "";
     if (action === "getData") {
       return _json(getDataObjects());
     }
-
-    if (action === "export") {
-      const type = e.parameter.type || 'csv';
-      const data = getDataObjects();
-
-      if (type === 'json') {
-        return ContentService.createTextOutput(JSON.stringify(data, null, 2))
-          .setMimeType(ContentService.MimeType.JSON);
+    if (action === "backup") {
+      const type = (e.parameter && e.parameter.type) || "csv";
+      if (type === "json") {
+        const data = getDataObjects();
+        return _json(data);
       } else {
-        const csv = exportCSV(data);
-        return ContentService.createTextOutput(csv)
-          .setMimeType(ContentService.MimeType.CSV)
-          .downloadAsFile('export.csv');
+        return ContentService
+          .createTextOutput(exportCSV())
+          .setMimeType(ContentService.MimeType.CSV);
       }
     }
-    
-    return ContentService.createTextOutput("SSKratomYMT API is running.")
-      .setMimeType(ContentService.MimeType.TEXT);
-
+    return ContentService.createTextOutput("✅ SSKratomYMT API is running.");
   } catch (err) {
-    return _json({ success: false, error: "Server error: " + err.message });
+    return _json({ success: false, error: err.message });
   }
 }
 
 function doPost(e) {
   try {
-    const data = JSON.parse(e.postData.contents);
-
-    if (!data || !data.date) {
-      throw new Error("ข้อมูลไม่ถูกต้องหรือไม่พบข้อมูลวันที่ (date)");
+    if (!e || !e.postData || !e.postData.contents) {
+      throw new Error("No POST data received.");
     }
-    
+    const data = JSON.parse(e.postData.contents);
     const s = _sheet();
+    if (!s) throw new Error("ไม่พบชีต: " + SHEET_NAME);
 
-    // ================== แก้ไขปัญหาวันที่อย่างสมบูรณ์ ==================
-    // 1. แยกส่วนประกอบของวันที่จากสตริง 'YYYY-MM-DD'
-    const dateParts = data.date.split('-');
-    const year = parseInt(dateParts[0], 10);
-    const month = parseInt(dateParts[1], 10) - 1; // เดือนใน JavaScript เริ่มนับจาก 0
-    const day = parseInt(dateParts[2], 10);
-
-    // 2. สร้าง Date object ใน timezone ของสคริปต์
-    const scriptTimeZone = Session.getScriptTimeZone();
-    const dateString = `${year}-${month + 1}-${day}`;
-    const correctDate = new Date(dateString + 'T00:00:00'); // ตั้งเวลาเป็น 00:00:00
-    
-    // 3. ใช้ Utilities.formatDate เพื่อให้แน่ใจว่าวันที่ถูกต้อง
-    const formattedDate = Utilities.formatDate(correctDate, scriptTimeZone, 'yyyy-MM-dd');
-    
-    // 4. สร้างแถวข้อมูลสำหรับบันทึก
     const row = [
-      formattedDate, // ใช้วันที่ที่ฟอร์แมตแล้ว
+      data.date ? new Date(data.date) : new Date(),
       Number(data.sold) || 0,
       Number(data.pending) || 0,
       Number(data.cleared) || 0,
       Number(data.revenue) || 0,
-      Number(data.pipefee) || 0,
-      Number(data.sharefee) || 0,
-      Number(data.otherfee) || 0,
-      Number(data.savefee) || 0,
+      Number(data.pipeFee) || 0,
+      Number(data.shareFee) || 0,
+      Number(data.otherFee) || 0,
+      Number(data.saveFee) || 0,
       Number(data.expense) || 0,
       Number(data.balance) || 0,
-      new Date() // Timestamp ปัจจุบัน
+      new Date()
     ];
-
     s.appendRow(row);
 
-    return _json({ 
-      success: true, 
-      message: "บันทึกข้อมูลเรียบร้อย",
-      recordedDate: formattedDate // ส่งคืนวันที่ที่บันทึกจริง
-    });
-
+    return _json({ success: true, message: "บันทึกข้อมูลสำเร็จ" });
   } catch (err) {
-    console.error("doPost Error:", err.message);
     return _json({ success: false, error: err.message });
   }
 }
 
+// --- Utility Functions ---
 function getDataObjects() {
-  const range = _sheet().getDataRange();
-  const values = range.getValues();
-  const scriptTimeZone = Session.getScriptTimeZone();
+  const s = _sheet();
+  const values = s.getDataRange().getValues();
+  let start = 0;
+  if (values.length && String(values[0][0]).toLowerCase().includes("date")) start = 1;
 
-  if (values.length <= 1) return [];
-
-  const headers = values[0].map(h => String(h).toLowerCase().trim());
   const out = [];
-
-  for (let r = 1; r < values.length; r++) {
-    const rowValues = values[r];
-    if (rowValues.every(v => v === '')) continue;
-
-    const obj = {};
-    headers.forEach((h, i) => {
-      let v = rowValues[i];
-      
-      // จัดการกับคอลัมน์วันที่
-      if (h === 'date') {
-        if (v instanceof Date) {
-          obj[h] = Utilities.formatDate(v, scriptTimeZone, 'yyyy-MM-dd');
-        } else if (typeof v === 'string' && v) {
-          // หากเป็นสตริง ให้ใช้ตามเดิม
-          obj[h] = v;
-        } else {
-          obj[h] = '';
-        }
-      } 
-      // จัดการกับ timestamp
-      else if (h === 'timestamp' && v instanceof Date) {
-        obj[h] = Utilities.formatDate(v, scriptTimeZone, 'yyyy-MM-dd HH:mm:ss');
-      } else {
-        obj[h] = v;
-      }
+  for (let r = start; r < values.length; r++) {
+    const v = values[r];
+    out.push({
+      date: v[0] ? Utilities.formatDate(new Date(v[0]), Session.getScriptTimeZone(), 'yyyy-MM-dd') : "",
+      sold: Number(v[1])||0,
+      pending: Number(v[2])||0,
+      cleared: Number(v[3])||0,
+      revenue: Number(v[4])||0,
+      pipeFee: Number(v[5])||0,
+      shareFee: Number(v[6])||0,
+      otherFee: Number(v[7])||0,
+      saveFee: Number(v[8])||0,
+      expense: Number(v[9])||0,
+      balance: Number(v[10])||0
     });
-    out.push(obj);
   }
   return out;
 }
 
-function exportCSV(data) {
-  const header = HEADERS.filter(h => h !== 'timestamp').join(",");
-  const rows = data.map(d => {
-    return HEADERS.filter(h => h !== 'timestamp')
-      .map(h_key => {
-        let value = d[h_key] || "";
-        // จัดการกับค่าที่มี comma ในสตริง
-        if (typeof value === 'string' && value.includes(',')) {
-          return `"${value}"`;
-        }
-        return value;
-      })
-      .join(",");
+function exportCSV() {
+  const data = getDataObjects();
+  const header = ["date","sold","pending","cleared","revenue","pipeFee","shareFee","otherFee","saveFee","expense","balance"];
+  const rows = [header.join(",")];
+  data.forEach(d => {
+    rows.push([d.date,d.sold,d.pending,d.cleared,d.revenue,d.pipeFee,d.shareFee,d.otherFee,d.saveFee,d.expense,d.balance].join(","));
   });
-  return [header, ...rows].join("\n");
+  return rows.join("\n");
+}
+
+function _json(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
