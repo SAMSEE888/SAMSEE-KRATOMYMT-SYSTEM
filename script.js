@@ -2,7 +2,7 @@
 const CONFIG = {
   PRICE_PER_BOTTLE: 40,
   SHEET_URL: "https://docs.google.com/spreadsheets/d/11vhg37MbHRm53SSEHLsCI3EBXx5_meXVvlRuqhFteaY", // <- เปลี่ยนได้
-  API_URL: "https://script.google.com/macros/s/AKfycbwWEfiRR7yq30r8z0xXrbjPA9pjd88-y6t0IdD5Kq2KTzjPO_QyOTK4odEu0e65vUSf/exec" // <- วาง URL Web App ของ Apps Script
+  API_URL: "https://script.google.com/macros/s/AKfycbwTYfu6Iszyl7WPkUFy0hbFbDejlajS1TTbuQpdwVRTn-rtSASSyAlobNqrmLpKZBAQ/exec" // <- วาง URL Web App ของ Apps Script
 };
 
 // ---------- Helpers ----------
